@@ -31,6 +31,6 @@ This repository operates on an **Open-Core** distribution model:
    ```
 3. Compile the structural assets:
    ```bash
-  dotnet build
+   dotnet build
    ```
    
