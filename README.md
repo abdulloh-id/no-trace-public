@@ -30,7 +30,7 @@ This repository operates on an **Open-Core** distribution model:
    cd no-trace-public
    ```
 3. Compile the structural assets:
-  ```bash
+   ```bash
   dotnet build
-  ```
+   ```
    
