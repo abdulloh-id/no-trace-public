@@ -1,0 +1,463 @@
+using System;
+using System.Collections.Generic;
+
+namespace NoTrace.Engine.Core;
+
+public enum Language
+{
+    UZ,
+    EN,
+    RU
+}
+
+public enum TextKey
+{
+    // Main Menu
+    MainMenuTitle,
+    MenuOption1,
+    MenuOption2,
+    MenuOption3,
+    MenuOption4,
+    MenuOption0,
+    SelectAction,
+    InvalidSelection,
+    LanguageChanged,
+
+    // Settings Menu
+    SettingsMenuTitle,
+    SelectLanguageOption,
+
+    // Active Chat Operations
+    FetchingActiveChats,
+    SearchPrompt,
+    NoMatchesFound,
+    MatchingResultsHeader,
+    EnterIndexPrompt,
+    InvalidSelectionAlert,
+    ScanningMetadata,
+    FoundMessagesCount,
+    SelectLevelTitle,
+    Level1Desc,
+    Level2Desc,
+    Level3Desc,
+    Level4Desc,
+    Level0Desc,
+    ChooseLevelPrompt,
+    InvalidLevelSelected,
+    LaunchingWipe,
+    OperationComplete,
+
+    // Surgical Depth Menu
+    SurgicalDepthMenuTitle,
+    SurgicalDepthOpt1,
+    SurgicalDepthOpt2,
+    SurgicalDepthOpt3,
+    SurgicalDepthOpt4,
+    SurgicalDepthOpt5,
+    SurgicalDepthChoicePrompt,
+    CustomDepthPrompt,
+    InvalidDepthInput,
+
+    // Blocklist Manager
+    BlocklistMenuTitle,
+    BlocklistOpt1,
+    BlocklistOpt2,
+    BlocklistOpt3,
+    BlocklistOpt0,
+    BlocklistChoicePrompt,
+    SyncingBlocklist,
+    BlocklistCleanAlready,
+    BatchLimitReached,
+    RateLimitTriggered,
+    ResumingPurge,
+    SkippingToAvoidBan,
+    EntityError,
+    EntitiesProcessedSuccess,
+
+    // Blocklist Operational Engine Logs
+    WaitCooldownAlert,
+    ForensicPurgeLog,
+
+    // Useless Contacts Operational Engine Logs
+    FindingContacts,
+    MarkedForPurge,
+    NoContactsFound,
+    ConfirmContactPurge,
+    PurgeProgress,
+    ContactPurgeSuccess,
+
+    // Active Chat Execution Traces & Success Metrics
+    LogExecutingSurgical,
+    LogExecutingForensic,
+    LogDeepCleaningLinked,
+    LogScanningLinkedGroup,
+    LogTruncatedMainChannel,
+    LogTruncatedLinkedGroup,
+    LogDeletedLinkedSuccess,
+    LogForensicWipeSuccess,
+
+    // Active Chat Errors, Notes & Swallowed RpcExceptions
+    LogNoLinkedMessagesFound,
+    LogLinkedScanParticipantSkipped,
+    LogLinkedCleanupBypassed,
+    LogLinkedLeaveParticipantSkipped,
+    LogMainLeaveSkipped,
+    LogFootprintCleanupSkipped,
+
+    // Engine Boot/Shutdown Lifecycle Hooks
+    EngineInitializing,
+    LoginSuccess,
+    EngineShutdown,
+
+    // Shared Metadata Strings & Dynamic UI Format Fallbacks
+    LabelChoicePrompt,
+    LabelTitleHeader,
+    FallbackUnknown,
+    PrefixBot,
+    PrefixUser,
+    PrefixChatChannel
+}
+
+/// <summary>
+/// Provides high-performance, centralized localizations supporting Sentence-case UI design targets.
+/// </summary>
+public static class LocaleManager
+{
+    public static Language CurrentLanguage { get; set; } = Language.EN;
+
+    private static readonly Dictionary<Language, Dictionary<TextKey, string>> Translations = new();
+
+    static LocaleManager()
+    {
+        InitializeEnglishProfile();
+        InitializeUzbekProfile();
+        InitializeRussianProfile();
+    }
+
+    public static string T(TextKey key)
+    {
+        if (Translations.TryGetValue(CurrentLanguage, out var registry) && registry.TryGetValue(key, out var text))
+        {
+            return text;
+        }
+
+        // Defensive Fallback Path to avoid blank UI strings or exceptions
+        return Translations.TryGetValue(Language.EN, out var defaultRegistry) && defaultRegistry.TryGetValue(key, out var defaultText)
+            ? defaultText
+            : $"[{key}]";
+    }
+
+    public static string T(TextKey key, params object[] args)
+    {
+        string pattern = T(key);
+        try
+        {
+            return string.Format(pattern, args);
+        }
+        catch (FormatException)
+        {
+            // Fail-safe protection layer preventing unhandled crashes on structural translation mismatches
+            return $"{pattern} (Parameters mismatch: {string.Join(", ", args)})";
+        }
+    }
+
+    private static void InitializeEnglishProfile()
+    {
+        Translations[Language.EN] = new Dictionary<TextKey, string>
+        {
+            [TextKey.MainMenuTitle] = "--- NoTrace Engine Main Menu ---",
+            [TextKey.MenuOption1] = "[1] Active Chat Operations (Search & Wipe)",
+            [TextKey.MenuOption2] = "[2] Metadata: Blocklist Purge (Remove Blacklist Trail)",
+            [TextKey.MenuOption3] = "[3] Metadata: Useless Contacts Purge (Clean Ghost Contacts)",
+            [TextKey.MenuOption4] = "[4] Settings",
+            [TextKey.MenuOption0] = "[0] Exit Engine",
+            [TextKey.SelectAction] = "Select action: ",
+            [TextKey.InvalidSelection] = "Invalid selection. Try again.",
+            [TextKey.LanguageChanged] = "Language successfully changed to English!",
+
+            [TextKey.SettingsMenuTitle] = "--- Settings Menu ---",
+            [TextKey.SelectLanguageOption] = "Select Language / Tilni tanlang / Выберите язык:\n[1] O‘zbekcha\n[2] English\n[3] Русский\n[0] Back",
+
+            [TextKey.FetchingActiveChats] = "\nFetching active conversation indices...",
+            [TextKey.SearchPrompt] = "Search for a chat/bot name (type '0' to go back to Main Menu): ",
+            [TextKey.NoMatchesFound] = "No matches found.",
+            [TextKey.MatchingResultsHeader] = "\nFound {0} matching results:\n------------------------------------------",
+            [TextKey.EnterIndexPrompt] = "\nEnter the [Index] to clean (or type '0' to search again): ",
+            [TextKey.InvalidSelectionAlert] = "Invalid selection.",
+            [TextKey.ScanningMetadata] = "Scanning footprint metadata...",
+            [TextKey.FoundMessagesCount] = "Found {0} modern messages authored by you in local cache window.",
+            [TextKey.SelectLevelTitle] = "\n--- Select NoTrace Level ---",
+            [TextKey.Level1Desc] = "1. [Surgical]    - Delete ONLY my messages for everyone",
+            [TextKey.Level2Desc] = "2. [Clean Slate] - Wipe all history (Stay in chat/list)",
+            [TextKey.Level3Desc] = "3. [Blacklist]   - Wipe history and BLOCK/LEAVE",
+            [TextKey.Level4Desc] = "4. [NoTrace]     - Wipe history and REMOVE (Zero metadata)",
+            [TextKey.Level0Desc] = "0. [Cancel]      - Back to search",
+            [TextKey.ChooseLevelPrompt] = "\nChoose Level (1-4 or 0): ",
+            [TextKey.InvalidLevelSelected] = "Operation cancelled: Invalid level selected.",
+            [TextKey.LaunchingWipe] = "\nLaunching Level {0} wipe operations...",
+            [TextKey.OperationComplete] = "[SUCCESS] Operation complete.",
+
+            [TextKey.SurgicalDepthMenuTitle] = "\n--- Surgical Depth Selection ---",
+            [TextKey.SurgicalDepthOpt1] = "[1] Last 50 messages",
+            [TextKey.SurgicalDepthOpt2] = "[2] Last 100 messages",
+            [TextKey.SurgicalDepthOpt3] = "[3] Last 200 messages",
+            [TextKey.SurgicalDepthOpt4] = "[4] Custom amount",
+            [TextKey.SurgicalDepthOpt5] = "[5] All messages",
+            [TextKey.SurgicalDepthChoicePrompt] = "Select depth limit: ",
+            [TextKey.CustomDepthPrompt] = "Enter custom message limit (numeric): ",
+            [TextKey.InvalidDepthInput] = "[Error] Invalid number provided. Defaulting to 'All'.",
+
+            [TextKey.BlocklistMenuTitle] = "\n--- Metadata: Blocklist Manager ---",
+            [TextKey.BlocklistOpt1] = "[1] Unblock ONLY Bots (Clears automated metadata)",
+            [TextKey.BlocklistOpt2] = "[2] Unblock ONLY Users (Clears human 1:1 trail)",
+            [TextKey.BlocklistOpt3] = "[3] Unblock EVERYTHING (Total Forensic Purge)",
+            [TextKey.BlocklistOpt0] = "[0] Back to Main Menu",
+            [TextKey.BlocklistChoicePrompt] = "\nChoice: ",
+            [TextKey.SyncingBlocklist] = "Fetching and syncing server-side blocklist...",
+            [TextKey.BlocklistCleanAlready] = "Your blocklist is already clean.",
+            [TextKey.BatchLimitReached] = "\n[BATCH LIMIT] 50 items reached. Cooldown for 10s...",
+            [TextKey.RateLimitTriggered] = "\n[RATE LIMIT] Telegram anti-spam triggered.",
+            [TextKey.ResumingPurge] = "\n[RESUMING] Retrying purge for {0}...\n",
+            [TextKey.SkippingToAvoidBan] = "[ERROR] Skipping {0} to avoid permanent API ban.",
+            [TextKey.EntityError] = "[ERROR] {0} failed: {1}",
+            [TextKey.EntitiesProcessedSuccess] = "\n[SUCCESS] {0} entities processed.",
+
+            [TextKey.WaitCooldownAlert] = "\r[WAIT] Sleeping for {0} seconds... Do not close the app.    ",
+            [TextKey.ForensicPurgeLog] = "[{0}] [Forensic Purge] {1}",
+
+            [TextKey.FindingContacts] = "Finding contacts with NO active chat history...",
+            [TextKey.MarkedForPurge] = "[Marked for Purge] {0} {1} (@{2})",
+            [TextKey.NoContactsFound] = "No useless ghost contacts found in address space metadata profiles.",
+            [TextKey.ConfirmContactPurge] = "\nConfirm deletion of {0} contacts? (y/n): ",
+            [TextKey.PurgeProgress] = "[Progress] Deleted {0}/{1}...",
+            [TextKey.ContactPurgeSuccess] = "\n[SUCCESS] Contact list metadata minimized. Ghost contact references cleared.",
+
+            [TextKey.LogExecutingSurgical] = "[NoTrace] Executing Surgical Footprint Purge...",
+            [TextKey.LogExecutingForensic] = "[NoTrace] Executing Forensic Wipe (Mutual Erasure + Contact Purge)...",
+            [TextKey.LogDeepCleaningLinked] = "Deep-cleaning linked group: {0}...",
+            [TextKey.LogScanningLinkedGroup] = "[Surgical] Scanning linked discussion group: {0}...",
+            [TextKey.LogTruncatedMainChannel] = "[Scoped] Truncated main channel target index to last {0} active units.",
+            [TextKey.LogTruncatedLinkedGroup] = "[Scoped] Truncated linked group target index to last {0} active units.",
+            [TextKey.LogDeletedLinkedSuccess] = "[SUCCESS] Deleted {0} messages from linked group '{1}'.",
+            [TextKey.LogForensicWipeSuccess] = "[SUCCESS] Forensic Wipe: History and Contact link destroyed.",
+
+            [TextKey.LogNoLinkedMessagesFound] = "[Note] No personal messages found in linked group '{0}'.",
+            [TextKey.LogLinkedScanParticipantSkipped] = "[Note] Linked group surgical scan skipped: You are not a participant.",
+            [TextKey.LogLinkedCleanupBypassed] = "[Minor] Linked group surgical cleanup bypassed: {0}",
+            [TextKey.LogLinkedLeaveParticipantSkipped] = "[Note] Linked group leave skipped: You are not a participant of '{0}'.",
+            [TextKey.LogMainLeaveSkipped] = "[Note] Main channel leave skipped: You are already not a participant.",
+            [TextKey.LogFootprintCleanupSkipped] = "[Minor] Footprint cleanup skipped: {0}",
+
+            [TextKey.EngineInitializing] = "--- NoTrace Engine Initializing ---",
+            [TextKey.LoginSuccess] = "\nSuccess! Logged in as: {0} (ID: {1})",
+            [TextKey.EngineShutdown] = "Exiting engine. Goodbye.",
+
+            [TextKey.LabelChoicePrompt] = "\nChoice: ",
+            [TextKey.LabelTitleHeader] = " | Title: ",
+            [TextKey.FallbackUnknown] = "Unknown",
+            [TextKey.PrefixBot] = "[BOT] ",
+            [TextKey.PrefixUser] = "[USER] ",
+            [TextKey.PrefixChatChannel] = "[CHAT/CHANNEL] "
+        };
+    }
+
+    private static void InitializeUzbekProfile()
+    {
+        Translations[Language.UZ] = new Dictionary<TextKey, string>
+        {
+            [TextKey.MainMenuTitle] = "--- NoTrace Engine Asosiy Menyusi ---",
+            [TextKey.MenuOption1] = "[1] Faol Suhbat Amallari (Qidiruv va Tozalash)",
+            [TextKey.MenuOption2] = "[2] Metama'lumotlar: Bloklanganlar Ro‘yxatini Tozalash",
+            [TextKey.MenuOption3] = "[3] Metama'lumotlar: Keraksiz Kontaktlarni Tozalash",
+            [TextKey.MenuOption4] = "[4] Sozlamalar",
+            [TextKey.MenuOption0] = "[0] Tizimdan Chiqish",
+            [TextKey.SelectAction] = "Harakatni tanlang: ",
+            [TextKey.InvalidSelection] = "Noto‘g‘ri tanlov. Qaytadan urinib ko‘ring.",
+            [TextKey.LanguageChanged] = "Til O‘zbek tiliga muvaffaqiyatli o‘zgartirildi!",
+
+            [TextKey.SettingsMenuTitle] = "--- Sozlamalar Menyusi ---",
+            [TextKey.SelectLanguageOption] = "Tilni tanlang / Select Language / Выберите язык:\n[1] O‘zbekcha\n[2] English\n[3] Русский\n[0] Orqaga",
+
+            [TextKey.FetchingActiveChats] = "\nFaol suhbatlar indekslari yuklanmoqda...",
+            [TextKey.SearchPrompt] = "Suhbat yoki bot nomini kiriting (Asosiy menyuga qaytish uchun '0'): ",
+            [TextKey.NoMatchesFound] = "Hech qanday moslik topilmadi.",
+            [TextKey.MatchingResultsHeader] = "\n{0} ta mos keladigan natija topildi:\n------------------------------------------",
+            [TextKey.EnterIndexPrompt] = "\nTozalanadigan [Indeks]ni kiriting (yoki qayta qidirish uchun '0'): ",
+            [TextKey.InvalidSelectionAlert] = "Noto‘g‘ri tanlov.",
+            [TextKey.ScanningMetadata] = "Raqamli izlar tahlil qilinmoqda...",
+            [TextKey.FoundMessagesCount] = "Kesh oynasida siz tomondan yozilgan {0} ta xabar topildi.",
+            [TextKey.SelectLevelTitle] = "\n--- NoTrace Darajasini Tanlang ---",
+            [TextKey.Level1Desc] = "1. [Zargarona]      - FAQAT mening xabarlarimni hamma uchun o‘chirish",
+            [TextKey.Level2Desc] = "2. [Oq varaq]       - Barcha suhbat tarixini tozalash (guruhda qolish)",
+            [TextKey.Level3Desc] = "3. [Qora ro‘yxat]    - Tarixni tozalash va BLOKLASH/CHIQISH",
+            [TextKey.Level4Desc] = "4. [Izsiz]          - Tarixni o‘chirish va aloqani mutloq uzish (Metasiz)",
+            [TextKey.Level0Desc] = "0. [Ortga]          - Qidiruvga qaytish",
+            [TextKey.ChooseLevelPrompt] = "\nDarajani tanlang (1-4 yoki 0): ",
+            [TextKey.InvalidLevelSelected] = "Amal bekor qilindi: Noto‘g‘ri daraja tanlandi.",
+            [TextKey.LaunchingWipe] = "\n{0}-darajali tozalash amallari ishga tushirilmoqda...",
+            [TextKey.OperationComplete] = "[MUVAFFAQIYAT] Amal bajarildi.",
+
+            [TextKey.SurgicalDepthMenuTitle] = "\n--- Zargarona tozalash chuqurligi ---",
+            [TextKey.SurgicalDepthOpt1] = "[1] Oxirgi 50 ta xabar",
+            [TextKey.SurgicalDepthOpt2] = "[2] Oxirgi 100 ta xabar",
+            [TextKey.SurgicalDepthOpt3] = "[3] Oxirgi 200 ta xabar",
+            [TextKey.SurgicalDepthOpt4] = "[4] Maxsus miqdor (Qo‘lda kiritish)",
+            [TextKey.SurgicalDepthOpt5] = "[5] Barcha xabarlar (Hammasi)",
+            [TextKey.SurgicalDepthChoicePrompt] = "Tozalash chuqurligini tanlang: ",
+            [TextKey.CustomDepthPrompt] = "Maxsus xabarlar sonini kiriting (raqam): ",
+            [TextKey.InvalidDepthInput] = "[Xatolik] Noto‘g‘ri raqam kiritildi. 'Barchasi' rejimi tanlandi.",
+
+            [TextKey.BlocklistMenuTitle] = "\n--- Metama'lumot: Bloklanganlar Nazorati ---",
+            [TextKey.BlocklistOpt1] = "[1] FAQAT Botlarni blokdan chiqarish (Tizimli izlarni o‘chirish)",
+            [TextKey.BlocklistOpt2] = "[2] FAQAT Foydalanuvchilarni chiqarish (Shaxsiy izlarni o‘chirish)",
+            [TextKey.BlocklistOpt3] = "[3] HAMMASINI blokdan chiqarish (Mutlaq raqamli tozalash)",
+            [TextKey.BlocklistOpt0] = "[0] Asosiy menyuga qaytish",
+            [TextKey.BlocklistChoicePrompt] = "\nTanlov: ",
+            [TextKey.SyncingBlocklist] = "Serverdagi bloklanganlar ro‘yxati sinxronizatsiya qilinmoqda...",
+            [TextKey.BlocklistCleanAlready] = "Sizning qora ro‘yxatingiz allaqachon toza.",
+            [TextKey.BatchLimitReached] = "\n[PAKET CHEKLOVI] 50 ta element bajarildi. 10 soniya kutish...",
+            [TextKey.RateLimitTriggered] = "\n[CHEKLOV]        Telegram anti-spam himoyasi faollashdi.",
+            [TextKey.ResumingPurge] = "\n[TIKLANISH] {0} uchun tozalash qayta urinilmoqda...\n",
+            [TextKey.SkippingToAvoidBan] = "[XATO] Doimiy bloklanishni oldini olish uchun {0} tashlab ketildi.",
+            [TextKey.EntityError] = "[XATO] {0} bajarilmadi: {1}",
+            [TextKey.EntitiesProcessedSuccess] = "\n[MUVAFFAQIYAT] {0} ta obyekt qayta ishlandi.",
+
+            [TextKey.WaitCooldownAlert] = "\r[KUTISH] {0} soniya qoldi... Ilovani yopmang.    ",
+            [TextKey.ForensicPurgeLog] = "[{0}] [Butkul tozalash] {1}",
+
+            [TextKey.FindingContacts] = "Faol chatlar tarixiga ega bo‘lmagan 'arvoh' kontaktlar qidirilmoqda...",
+            [TextKey.MarkedForPurge] = "[Tozalashga Belgilandi] {0} {1} (@{2})",
+            [TextKey.NoContactsFound] = "Kontaktlar metama'lumotlarida faol bo‘lmagan 'arvoh' kontaktlar topilmadi.",
+            [TextKey.ConfirmContactPurge] = "\nUshbu {0} ta kontaktni o‘chirishni tasdiqlaysizmi? (y/n): ",
+            [TextKey.PurgeProgress] = "[Jarayon] O‘chirildi: {0}/{1}...",
+            [TextKey.ContactPurgeSuccess] = "\n[MUVAFFAQIYAT] Kontaktlar ro‘yxati optimallashtirildi va 'arvoh' bog‘lanishlar tozalandi.",
+
+            [TextKey.LogExecutingSurgical] = "[Izsiz] Zargarona izlarni tozalash operatsiyasi bajarilmoqda...",
+            [TextKey.LogExecutingForensic] = "[Izsiz] Ekspertiza darajasidagi tozalash bajarilmoqda (O‘zaro o‘chirish + Kontaktlar tozalashi)...",
+            [TextKey.LogDeepCleaningLinked] = "Bog‘langan guruh chuqur tozalanmoqda: {0}...",
+            [TextKey.LogScanningLinkedGroup] = "[Zargarona] Bog‘langan muhokama guruhi skanerlanmoqda: {0}...",
+            [TextKey.LogTruncatedMainChannel] = "[Ko‘lam] Asosiy kanal nishon ko‘lami oxirgi {0} ta xabargacha qisqartirildi.",
+            [TextKey.LogTruncatedLinkedGroup] = "[Ko‘lam] Bog‘langan guruh nishon ko‘lami oxirgi {0} ta xabargacha qisqartirildi.",
+            [TextKey.LogDeletedLinkedSuccess] = "[MUVAFFAQIYAT] '{1}' bog‘langan guruhidan {0} ta xabar muvaffaqiyatli o‘chirildi.",
+            [TextKey.LogForensicWipeSuccess] = "[MUVAFFAQIYAT] Ekspertiza darajasidagi tozalash: Chat tarixi va kontakt tizimi aloqalari yo‘q qilindi.",
+
+            [TextKey.LogNoLinkedMessagesFound] = "[Eslatma] '{0}' bog‘langan guruhida shaxsiy xabarlar topilmadi.",
+            [TextKey.LogLinkedScanParticipantSkipped] = "[Eslatma] Bog‘langan guruh jarayoni o‘tkazib yuborildi: Siz ushbu guruh a'zosi emassiz.",
+            [TextKey.LogLinkedCleanupBypassed] = "[Kichik Nosozlik] Bog‘langan guruh tozalash jarayoni chetlab o‘tildi: {0}",
+            [TextKey.LogLinkedLeaveParticipantSkipped] = "[Eslatma] Guruhni tark etish amalga oshirilmadi: Siz '{0}' guruhining a'zosi emassiz.",
+            [TextKey.LogMainLeaveSkipped] = "[Eslatma] Asosiy kanalni tark etish amalga oshirilmadi: Siz allaqachon a'zo emassiz.",
+            [TextKey.LogFootprintCleanupSkipped] = "[Kichik Nosozlik] Izlarni o‘chirish amalga oshirilmadi: {0}",
+
+            [TextKey.EngineInitializing] = "--- NoTrace Dvigateli Ishga Tushmoqda ---",
+            [TextKey.LoginSuccess] = "\nMuvaffaqiyatli ulanish! Tizimga kirildi: {0} (ID: {1})",
+            [TextKey.EngineShutdown] = "Dvigateldan chiqilmoqda. Xayr.",
+
+            [TextKey.LabelChoicePrompt] = "\nTanlov: ",
+            [TextKey.LabelTitleHeader] = " | Nomi: ",
+            [TextKey.FallbackUnknown] = "Noma'lum",
+            [TextKey.PrefixBot] = "[BOT] ",
+            [TextKey.PrefixUser] = "[FOYDALANUVCHI] ",
+            [TextKey.PrefixChatChannel] = "[CHAT/KANAL] "
+        };
+    }
+
+    private static void InitializeRussianProfile()
+    {
+        Translations[Language.RU] = new Dictionary<TextKey, string>
+        {
+            [TextKey.MainMenuTitle] = "--- Главное Меню NoTrace Engine ---",
+            [TextKey.MenuOption1] = "[1] Операции с активными чатами (Поиск и Очистка)",
+            [TextKey.MenuOption2] = "[2] Метаданные: Очистка черного списка (Удалить след)",
+            [TextKey.MenuOption3] = "[3] Метаданные: Очистка неактивных контактов",
+            [TextKey.MenuOption4] = "[4] Настройки",
+            [TextKey.MenuOption0] = "[0] Выйти из движка",
+            [TextKey.SelectAction] = "Выберите действие: ",
+            [TextKey.InvalidSelection] = "Неверный выбор. Попробуйте еще раз.",
+            [TextKey.LanguageChanged] = "Язык успешно изменен на Русский!",
+
+            [TextKey.SettingsMenuTitle] = "--- Меню Настроек ---",
+            [TextKey.SelectLanguageOption] = "Выберите язык / Tilni tanlang / Select Language:\n[1] O‘zbekcha\n[2] English\n[3] Русский\n[0] Назад",
+
+            [TextKey.FetchingActiveChats] = "\nПолучение индексов активных диалогов...",
+            [TextKey.SearchPrompt] = "Введите имя чата/бота (или '0' для возврата в Главное Меню): ",
+            [TextKey.NoMatchesFound] = "Совпадений не найдено.",
+            [TextKey.MatchingResultsHeader] = "\nНайдено {0} совпадающих результатов:\n------------------------------------------",
+            [TextKey.EnterIndexPrompt] = "\nВведите [Индекс] для очистки (или '0' для повторного поиска): ",
+            [TextKey.InvalidSelectionAlert] = "Неверный выбор.",
+            [TextKey.ScanningMetadata] = "Сканирование метаданных цифрового следа...",
+            [TextKey.FoundMessagesCount] = "В окне локального кэша найдено {0} ваших сообщений.",
+            [TextKey.SelectLevelTitle] = "\n--- Выберите Уровень NoTrace ---",
+            [TextKey.Level1Desc] = "1. [Ювелирный]      - Удалить ТОЛЬКО мои сообщения для всех",
+            [TextKey.Level2Desc] = "2. [Чистый Лист]    - Стереть всю историю (Остаться в чате)",
+            [TextKey.Level3Desc] = "3. [Чёрный Список]  - Стереть историю и ЗАБЛОКИРОВАТЬ/ВЫЙТИ",
+            [TextKey.Level4Desc] = "4. [Без Следа]      - Стереть историю и УДАЛИТЬ связь (Без метаданных)",
+            [TextKey.Level0Desc] = "0. [Назад]          - Вернуться к поиску",
+            [TextKey.ChooseLevelPrompt] = "\nВыберите уровень (1-4 или 0): ",
+            [TextKey.InvalidLevelSelected] = "Операция отменена: Выбран неверный уровень.",
+            [TextKey.LaunchingWipe] = "\nЗапуск операции очистки уровня {0}...",
+            [TextKey.OperationComplete] = "[УСПЕХ] Операция завершена.",
+
+            [TextKey.SurgicalDepthMenuTitle] = "\n--- Глубина ювелирной очистки ---",
+            [TextKey.SurgicalDepthOpt1] = "[1] Последние 50 сообщений",
+            [TextKey.SurgicalDepthOpt2] = "[2] Последние 100 сообщений",
+            [TextKey.SurgicalDepthOpt3] = "[3] Последние 200 сообщений",
+            [TextKey.SurgicalDepthOpt4] = "[4] Указать свое количество",
+            [TextKey.SurgicalDepthOpt5] = "[5] Все сообщения",
+            [TextKey.SurgicalDepthChoicePrompt] = "Выберите лимит глубины: ",
+            [TextKey.CustomDepthPrompt] = "Введите точное количество сообщений (число): ",
+            [TextKey.InvalidDepthInput] = "[Ошибка] Введено неверное число. Выбран режим 'Все'.",
+
+            [TextKey.BlocklistMenuTitle] = "\n--- Метаданные: Управление Чёрным Списком ---",
+            [TextKey.BlocklistOpt1] = "[1] Разблокировать ТОЛЬКО ботов         (Удаление следов автоматизации)",
+            [TextKey.BlocklistOpt2] = "[2] Разблокировать ТОЛЬКО пользователей (Удаление истории взаимодействия)",
+            [TextKey.BlocklistOpt3] = "[3] Разблокировать ВСЁ                  (Тотальная зачистка метаданных)",
+            [TextKey.BlocklistOpt0] = "[0] Вернуться в главное меню",
+            [TextKey.BlocklistChoicePrompt] = "\nВаш выбор: ",
+            [TextKey.SyncingBlocklist] = "Получение и синхронизация чёрного списка с сервером...",
+            [TextKey.BlocklistCleanAlready] = "Ваш чёрный список уже пуст.",
+            [TextKey.BatchLimitReached] = "\n[ЛИМИТ ПАКЕТА] Обработано 50 элементов. Пауза 10 сек...",
+            [TextKey.RateLimitTriggered] = "\n[ОГРАНИЧЕНИЕ]  Сработала антиспам-защита Telegram.",
+            [TextKey.ResumingPurge] = "\n[ВОЗОБНОВЛЕНИЕ] Повторная попытка очистки для {0}...\n",
+            [TextKey.SkippingToAvoidBan] = "[ОШИБКА] Пропуск {0} во избежание permanentной блокировки API.",
+            [TextKey.EntityError] = "[ОШИБКА] Сбой {0}: {1}",
+            [TextKey.EntitiesProcessedSuccess] = "\n[УСПЕХ] Обработано объектов: {0}.",
+
+            [TextKey.WaitCooldownAlert] = "\r[ОЖИДАНИЕ] Тайм-аут {0} сек... Не закрывайте приложение.    ",
+            [TextKey.ForensicPurgeLog] = "[{0}] [Судебная Очистка] {1}",
+
+            [TextKey.FindingContacts] = "Поиск контактов без активной истории чатов и диалогов...",
+            [TextKey.MarkedForPurge] = "[Намечен на удаление] {0} {1} (@{2})",
+            [TextKey.NoContactsFound] = "В метаданных адресной книги не обнаружено неактивных призрачных контактов.",
+            [TextKey.ConfirmContactPurge] = "\nПодтвердить удаление {0} контактов? (y/n): ",
+            [TextKey.PurgeProgress] = "[Прогресс] Удалено {0}/{1}...",
+            [TextKey.ContactPurgeSuccess] = "\n[УСПЕХ] Метаданные контактов минимизированы. Связи с призраками стерты.",
+
+            [TextKey.LogExecutingSurgical] = "[Без Следа] Выполнение хирургической очистки цифрового следа...",
+            [TextKey.LogExecutingForensic] = "[Без Следа] Запуск глубокого криминалистического стирания (Взаимное удаление + Контакты)...",
+            [TextKey.LogDeepCleaningLinked] = "Глубокая зачистка связанной группы обсуждений: {0}...",
+            [TextKey.LogScanningLinkedGroup] = "[Ювелирный] Сканирование привязанной группы комментариев: {0}...",
+            [TextKey.LogTruncatedMainChannel] = "[Масштаб] Диапазон целей основного канала урезан до последних {0} единиц.",
+            [TextKey.LogTruncatedLinkedGroup] = "[Масштаб] Диапазон целей связанной группы урезан до последних {0} единиц.",
+            [TextKey.LogDeletedLinkedSuccess] = "[УСПЕХ] Удалено {0} сообщений из связанной группы '{1}'.",
+            [TextKey.LogForensicWipeSuccess] = "[УСПЕХ] Судебная очистка: История переписки и связи аккаунта уничтожены.",
+
+            [TextKey.LogNoLinkedMessagesFound] = "[Заметка] Личных сообщений в связанной группе '{0}' не найдено.",
+            [TextKey.LogLinkedScanParticipantSkipped] = "[Заметка] Сканирование связанной группы пропущено: Вы не являетесь её участником.",
+            [TextKey.LogLinkedCleanupBypassed] = "[Пропуск] Обход зачистки связанной группы комментариев: {0}",
+            [TextKey.LogLinkedLeaveParticipantSkipped] = "[Заметка] Не удалось покинуть группу: Вы не являетесь участником '{0}'.",
+            [TextKey.LogMainLeaveSkipped] = "[Заметка] Не удалось покинуть основной канал: Вы уже не состоите в нём.",
+            [TextKey.LogFootprintCleanupSkipped] = "[Пропуск] Сбой удаления следов переписки: {0}",
+
+            [TextKey.EngineInitializing] = "--- Инициализация Движка NoTrace Engine ---",
+            [TextKey.LoginSuccess] = "\nАвторизация успешна! Вход выполнен как: {0} (ID: {1})",
+            [TextKey.EngineShutdown] = "Завершение работы движка. До свидания.",
+
+            [TextKey.LabelChoicePrompt] = "\nВаш выбор: ",
+            [TextKey.LabelTitleHeader] = " | Название: ",
+            [TextKey.FallbackUnknown] = "Неизвестно",
+            [TextKey.PrefixBot] = "[БОТ] ",
+            [TextKey.PrefixUser] = "[ПОЛЬЗОВАТЕЛЬ] ",
+            [TextKey.PrefixChatChannel] = "[ЧАТ/КАНАЛ] "
+        };
+    }
+}
