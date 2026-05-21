@@ -12,7 +12,7 @@ This repository operates on an **Open-Core** distribution model:
 
 ## Features (Core Architecture)
 * **Secure Memory Caching:** Local `.env` configuration mapping.
-* **Trilingual Interface Matrix:** Fully localized runtime workflows supporting English, Oʻzbekcha, and Русский.
+* **Trilingual Interface Matrix:** Fully localized runtime workflows supporting English, Oʻzbekcha (Uzbek), and Русский (Russian).
 * **Decoupled Architecture:** Built on solid dependency inversion principles utilizing clear abstraction contracts.
 
 ## Getting Started
