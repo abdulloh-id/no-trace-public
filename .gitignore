@@ -1,12 +1,16 @@
-# Build results
+# Build results & Compiler Artifacts
 [Bb]in/
 [Oo]bj/
+*.deps.json
+*.runtimeconfig.json
 
-# Telegram Session - DO NOT REMOVE THIS
+# Sensitive personal data protection
 .env
 *.session
 *.dat
 
-# Visual Studio files
+# Visual Studio / Rider environment settings
 .vs/
+.idea/
 *.user
+*.suo
